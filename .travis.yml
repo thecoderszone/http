@@ -1,0 +1,12 @@
+language: php
+php:
+- 7.3
+- 7.4
+install: composer install --no-interaction
+script:
+- vendor/bin/phpunit --coverage-clover coverage.xml
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+env:
+  global:
+    secure: dws+I1JTzEOSnoBwBwQAXMcShTc3qPlTcX9YRhRGu8ycLZk9Ataw0o8Mmei3ULEFtCFj97lkmL+Cah89OXxAW7vBVppX6mr4HlrprMUZ3vQnJ5aCz44GSrNdSCG37Qokh67WZ5borDdk9gr2jfIbLnllbYkPnwvc4vEWXBmSwaBJyNP3IXxsUAbiiT+9WcfUVovgsjz+XbBgDAsCNkbT0fAGG5BUHl9StWtjaVoEJS/+z+Nx+jV4rQHRg+XUWpI0YyBIWB0gFPm2vCGF9GgHhFqKvKd6ASKvBT6htdLw++DCXNBja+yhiprBJ+m6Y7fCJnb6qdWcys7+GSoOTCB63iXXU9J2dNJd8oqThVaH4UDkuvsEN7buFnaijcDzJvHIJ+xwxcMurlt4zOq3dJLYJQ6L5e1Yb1jU4aIXOPsSuGZllLMezhNIPLuBxeFD6oJfPQ1o8eNTads+lIg+tkPzG+n4baGlpRBeumXBDrirKgwzDrBcXXnWWvqd0xvhg3tUrvrEQA2vlxcampPht+3Ar/9FHoizWbqJTUFJXU/ICK1KgTNt1UhgHVGGdORCzKcaiXEZ+qpSseYjrA4d0h9MoNBAx1bfJdj0zyNuFpuDdHVc478/MndGVUCoJxzdlkN2c7NbvwePNF6RZcBI5VURBGbk1Usk3btX6aD8wVGCohk=
