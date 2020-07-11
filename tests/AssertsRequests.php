@@ -4,7 +4,7 @@
  * Unauthorized reproduction is prohibited.
  *
  * @package Dashboard
- * @author Paul Adams <paul.adams@thecoderszone.com>
+ * @author Paul Adams <paul@thecoderszone.com>
  */
 
 namespace Tests;

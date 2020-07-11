@@ -4,7 +4,7 @@
  * Unauthorized reproduction is prohibited.
  *
  * @package Dashboard
- * @author Paul Adams <paul.adams@thecoderszone.com>
+ * @author Paul Adams <paul@thecoderszone.com>
  */
 
 namespace Tests;
@@ -31,13 +31,6 @@ class ClientTest extends TestCase
      */
     protected $server;
     
-    protected function setUp(): void
-    {
-        parent::setUp();
-        
-        $this->createHandler();
-    }
-    
     public function test_request_returns_response()
     {
         $this->server->append(
@@ -45,7 +38,7 @@ class ClientTest extends TestCase
                 $statusCode = 200,
                 $headers = [
                     'Content-Type' => $contentType = 'text/html',
-                    'Server' => $server = [
+                    'Server'       => $server = [
                         'Apache',
                         'The Coders Zone',
                     ],
@@ -127,7 +120,7 @@ class ClientTest extends TestCase
         );
         
         $client = new Client([
-            'handler' => $this->handler,
+            'handler'  => $this->handler,
             'base_url' => 'https://thecoderszone.com/base',
         ]);
         
@@ -144,7 +137,7 @@ class ClientTest extends TestCase
         );
         
         $client = new Client([
-            'handler' => $this->handler,
+            'handler'  => $this->handler,
             'callback' => function (Response $response) use ($body) {
                 $this->assertInstanceOf(Response::class, $response);
                 $this->assertEquals($body, $response->body);
@@ -152,6 +145,22 @@ class ClientTest extends TestCase
         ]);
         
         $client->request('GET', '/test-url');
+    }
+    
+    public function test_client_exception_is_ignored_on_4xx_error_codes()
+    {
+        $this->server->append(
+            new GuzzleResponse(400)
+        );
+        
+        $client = new Client([
+            'handler' => $this->handler,
+        ]);
+        
+        $response = $client->request('GET', '/test-url');
+        
+        $this->assertRequestSent('GET', '/test-url');
+        $this->assertInstanceOf(Response::class, $response);
     }
     
     public function test_magic_method_routes_request()
@@ -187,5 +196,12 @@ class ClientTest extends TestCase
         $response = $client->delete('/url');
         $this->assertInstanceOf(Response::class, $response);
         $this->assertRequestSent('DELETE', '/url');
+    }
+    
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        $this->createHandler();
     }
 }
