@@ -9,6 +9,8 @@
 
 namespace TCZ\Http;
 
+use TCZ\Http\Exceptions\JsonException;
+
 /**
  * JSON response class.
  *
@@ -32,7 +34,13 @@ class JsonResponse extends Response
      */
     protected function parseBody($body)
     {
-        return json_decode($body, true);
+        $body = json_decode($body);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new JsonException(json_last_error_msg());
+        }
+        
+        return $body;
     }
     
     /**
@@ -44,6 +52,6 @@ class JsonResponse extends Response
      */
     public function __get($key)
     {
-        return $this->body[$key] ?? null;
+        return $this->body->{$key};
     }
 }
