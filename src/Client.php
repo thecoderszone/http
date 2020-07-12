@@ -26,7 +26,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @package TCZ\Http
  */
-class Client extends Guzzle
+class Client
 {
     /**
      * The base url.
@@ -43,6 +43,13 @@ class Client extends Guzzle
     protected $callback;
     
     /**
+     * The Guzzle instance.
+     *
+     * @var Guzzle
+     */
+    protected $client;
+    
+    /**
      * Instantiate the client.
      *
      * @param array $config
@@ -50,12 +57,12 @@ class Client extends Guzzle
     public function __construct(array $config = [])
     {
         $this->baseUrl = $config['base_url'] ?? null;
-        unset($config['base_url']);
+        unset($config['base_url'], $config['base_uri']);
         
         $this->callback = $config['callback'] ?? null;
         unset($config['callback']);
         
-        parent::__construct($config);
+        $this->client = new Guzzle($config);
     }
     
     /**
@@ -68,10 +75,10 @@ class Client extends Guzzle
      * @return Response
      * @throws GuzzleException
      */
-    public function request(string $method, $endpoint = null, array $config = []): ResponseInterface
+    public function request($method, $endpoint = null, array $config = [])
     {
         try {
-            $response = parent::request($method, $this->baseUrl.$endpoint, $config);
+            $response = $this->client->request($method, $this->baseUrl.$endpoint, $config);
         } catch (ClientException $exception) {
             $response = $exception->getResponse();
         }
@@ -101,5 +108,19 @@ class Client extends Guzzle
         }
         
         return new Response($response);
+    }
+    
+    /**
+     * Magic method to make a request.
+     *
+     * @param string $method
+     * @param array $arguments
+     *
+     * @return JsonResponse|Response
+     * @throws GuzzleException
+     */
+    public function __call($method, $arguments)
+    {
+        return $this->request(strtoupper($method), ...$arguments);
     }
 }
