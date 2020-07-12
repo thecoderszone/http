@@ -10,6 +10,7 @@
 namespace Tests;
 
 use TCZ\Http\Client;
+use TCZ\Http\Exceptions\JsonException;
 use TCZ\Http\JsonResponse;
 use TCZ\Http\Response;
 use GuzzleHttp\Psr7\Response as GuzzleResponse;
@@ -38,7 +39,7 @@ class ClientTest extends TestCase
                 $statusCode = 200,
                 $headers = [
                     'Content-Type' => $contentType = 'text/html',
-                    'Server'       => $server = [
+                    'Server' => $server = [
                         'Apache',
                         'The Coders Zone',
                     ],
@@ -113,6 +114,22 @@ class ClientTest extends TestCase
         $this->assertEquals($foo, $response->foo);
     }
     
+    public function test_json_parser_detects_invalid_json()
+    {
+        $this->server->append(
+            new GuzzleResponse(200, ['Content-Type' => 'application/json'], '{"key": value}')
+        );
+        
+        $client = new Client([
+            'handler' => $this->handler,
+        ]);
+        
+        $this->expectException(JsonException::class);
+        $this->expectErrorMessage('Syntax error');
+        
+        $client->request('GET', '/test-url');
+    }
+    
     public function test_request_url_includes_base_url()
     {
         $this->server->append(
@@ -120,7 +137,7 @@ class ClientTest extends TestCase
         );
         
         $client = new Client([
-            'handler'  => $this->handler,
+            'handler' => $this->handler,
             'base_url' => 'https://thecoderszone.com/base',
         ]);
         
@@ -137,7 +154,7 @@ class ClientTest extends TestCase
         );
         
         $client = new Client([
-            'handler'  => $this->handler,
+            'handler' => $this->handler,
             'callback' => function (Response $response) use ($body) {
                 $this->assertInstanceOf(Response::class, $response);
                 $this->assertEquals($body, $response->body);
