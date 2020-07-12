@@ -14,10 +14,10 @@ A wrapper built around the powerful Guzzle HTTP client.
   Instead, just retrieve response properties by their key.
   ```php
   $bar = $response->foo; // short form
-  $bar = $response->body['foo']; // long form
+  $bar = $response->body->foo; // long form
   ```
 - **Response header parsing**  
-  If there's only one header value for a name, thecoderszone/http gives you just that, instead of an array.
+  If there's only one header value for a name, `thecoderszone/http` gives you just that, instead of an array.
   ```php
   $response->getHeader('Content-Type'); // Guzzle: ['application/json'], thecoderszone/http: 'application/json'
   ```
