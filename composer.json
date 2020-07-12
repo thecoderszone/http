@@ -1,8 +1,10 @@
 {
     "name": "thecoderszone/http",
-    "description": "Simple wrapper on top of the popular Guzzle HTTP client",
+    "description": "Simple wrapper around the popular Guzzle HTTP client focused on developer experience",
     "type": "library",
     "require": {
+        "php": "7.2",
+        "ext-json": "*",
         "guzzlehttp/guzzle": "^7.0"
     },
     "require-dev": {
@@ -22,7 +24,7 @@
     "authors": [
         {
             "name": "Paul Adams",
-            "email": "paul.adams@thecoderszone.com"
+            "email": "paul@thecoderszone.com"
         }
     ]
 }
