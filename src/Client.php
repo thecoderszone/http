@@ -57,7 +57,7 @@ class Client
     public function __construct(array $config = [])
     {
         $this->baseUrl = $config['base_url'] ?? null;
-        unset($config['base_url'], $config['base_uri']);
+        unset($config['base_url']);
         
         $this->callback = $config['callback'] ?? null;
         unset($config['callback']);
