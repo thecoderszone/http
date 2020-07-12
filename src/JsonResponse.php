@@ -32,7 +32,7 @@ class JsonResponse extends Response
      */
     protected function parseBody($body)
     {
-        return json_decode($body, true);
+        return json_decode($body);
     }
     
     /**
@@ -44,6 +44,6 @@ class JsonResponse extends Response
      */
     public function __get($key)
     {
-        return $this->body[$key] ?? null;
+        return $this->body->{$key};
     }
 }

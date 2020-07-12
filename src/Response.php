@@ -10,13 +10,14 @@
 namespace TCZ\Http;
 
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Response class.
  *
  * @package TCZ\Http
  */
-class Response
+class Response implements ResponseInterface
 {
     /**
      * The protocol version.
@@ -54,6 +55,13 @@ class Response
     public $body;
     
     /**
+     * The body stream.
+     *
+     * @var StreamInterface
+     */
+    protected $stream;
+    
+    /**
      * The header names.
      *
      * @var array
@@ -71,8 +79,9 @@ class Response
         $this->code = $response->getStatusCode();
         $this->reason = $response->getReasonPhrase();
         $this->parseHeaders($response->getHeaders());
+        $this->stream = $response->getBody();
         $this->body = $this->parseBody(
-            $response->getBody()->getContents()
+            $this->stream->getContents()
         );
     }
     
@@ -81,7 +90,7 @@ class Response
      *
      * @param array $headers
      */
-    final protected function parseHeaders(array $headers)
+    protected function parseHeaders(array $headers)
     {
         foreach ($headers as $name => $values) {
             if (count($values) === 1) {
@@ -90,6 +99,22 @@ class Response
             
             $this->setHeader($name, $values);
         }
+    }
+    
+    /**
+     * Set a header.
+     *
+     * @param string $name
+     * @param string|array $value
+     *
+     * @return Response
+     */
+    public function setHeader($name, $value)
+    {
+        $this->headers[$name] = $value;
+        $this->headerNames[strtolower($name)] = $name;
+        
+        return $this;
     }
     
     /**
@@ -112,20 +137,6 @@ class Response
     public function getProtocolVersion()
     {
         return $this->version;
-    }
-    
-    /**
-     * Set the protocol version.
-     *
-     * @param string $version
-     *
-     * @return Response
-     */
-    public function setProtocolVersion($version)
-    {
-        $this->version = $version;
-        
-        return $this;
     }
     
     /**
@@ -159,43 +170,19 @@ class Response
     }
     
     /**
-     * Set the status.
-     *
-     * @param int $code
-     * @param string $reasonPhrase
-     *
-     * @return Response
-     */
-    public function setStatus($code, $reasonPhrase = null)
-    {
-        $this->code = $code;
-        $this->reason = $reasonPhrase;
-        
-        return $this;
-    }
-    
-    /**
      * Get the headers.
      *
-     * @return array
+     * @return string[][]
      */
     public function getHeaders()
     {
-        return $this->headers;
-    }
-    
-    /**
-     * Get a header.
-     *
-     * @param string $name
-     *
-     * @return string|array
-     */
-    public function getHeader($name)
-    {
-        $headerName = $this->getHeaderName($name);
-        
-        return $this->headers[$headerName] ?? null;
+        return array_map(function ($values) {
+            if (!is_array($values)) {
+                return [$values];
+            }
+            
+            return $values;
+        }, $this->headers);
     }
     
     /**
@@ -207,25 +194,89 @@ class Response
      */
     public function getHeaderLine($name)
     {
-        $header = $this->getHeader($name);
-        
-        if (is_array($header)) {
-            return implode(', ', $header);
-        }
-        
-        return $header;
+        return implode(', ', $this->getHeader($name));
     }
     
     /**
-     * Determine if the response has a header.
+     * Get a header.
      *
      * @param string $name
      *
-     * @return bool
+     * @return string[]
      */
-    public function hasHeader($name)
+    public function getHeader($name)
     {
-        return !is_null($this->getHeader($name));
+        $headerName = $this->getHeaderName($name);
+        
+        $values = $this->headers[$headerName] ?? [];
+        
+        if (!is_array($values)) {
+            return [$values];
+        }
+        
+        return $values;
+    }
+    
+    /**
+     * Get a header name.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    protected function getHeaderName($name)
+    {
+        return $this->headerNames[strtolower($name)] ?? $name;
+    }
+    
+    /**
+     * Get the body.
+     *
+     * @return StreamInterface
+     */
+    public function getBody()
+    {
+        return $this->stream;
+    }
+    
+    /**
+     * Set the body.
+     *
+     * @param string $body
+     *
+     * @return Response
+     */
+    public function setBody($body)
+    {
+        $this->body = $body;
+        
+        return $this;
+    }
+    
+    /**
+     * Set the protocol version.
+     *
+     * @param string $version
+     *
+     * @return Response
+     */
+    public function withProtocolVersion($version)
+    {
+        return $this->setProtocolVersion($version);
+    }
+    
+    /**
+     * Set the protocol version.
+     *
+     * @param string $version
+     *
+     * @return Response
+     */
+    public function setProtocolVersion($version)
+    {
+        $this->version = $version;
+        
+        return $this;
     }
     
     /**
@@ -236,12 +287,22 @@ class Response
      *
      * @return Response
      */
-    public function setHeader($name, $value)
+    public function withHeader($name, $value)
     {
-        $this->headers[$name] = $value;
-        $this->headerNames[strtolower($name)] = $name;
-        
-        return $this;
+        return $this->setHeader($name, $value);
+    }
+    
+    /**
+     * Append a header.
+     *
+     * @param string $name
+     * @param string|array $value
+     *
+     * @return Response
+     */
+    public function withAddedHeader($name, $value)
+    {
+        return $this->appendHeader($name, $value);
     }
     
     /**
@@ -266,6 +327,30 @@ class Response
     }
     
     /**
+     * Determine if the response has a header.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasHeader($name)
+    {
+        return count($this->getHeader($name)) > 0;
+    }
+    
+    /**
+     * Remove a header.
+     *
+     * @param string $name
+     *
+     * @return Response
+     */
+    public function withoutHeader($name)
+    {
+        return $this->removeHeader($name);
+    }
+    
+    /**
      * Remove a header.
      *
      * @param string $name
@@ -282,37 +367,42 @@ class Response
     }
     
     /**
-     * Get a header name.
-     *
-     * @param string $name
-     *
-     * @return string
-     */
-    protected function getHeaderName($name)
-    {
-        return $this->headerNames[strtolower($name)] ?? $name;
-    }
-    
-    /**
-     * Get the body.
-     *
-     * @return mixed
-     */
-    public function getBody()
-    {
-        return $this->body;
-    }
-    
-    /**
      * Set the body.
      *
-     * @param string $body
+     * @param StreamInterface $body
      *
      * @return Response
      */
-    public function setBody($body)
+    public function withBody(StreamInterface $body)
     {
-        $this->body = $body;
+        return $this->setBody($body->getContents());
+    }
+    
+    /**
+     * Set the status.
+     *
+     * @param int $code
+     * @param string $reasonPhrase
+     *
+     * @return Response
+     */
+    public function withStatus($code, $reasonPhrase = '')
+    {
+        return $this->setStatus($code, $reasonPhrase);
+    }
+    
+    /**
+     * Set the status.
+     *
+     * @param int $code
+     * @param string $reasonPhrase
+     *
+     * @return Response
+     */
+    public function setStatus($code, $reasonPhrase = null)
+    {
+        $this->code = $code;
+        $this->reason = $reasonPhrase;
         
         return $this;
     }
