@@ -109,7 +109,7 @@ class ClientTest extends TestCase
         $this->assertEquals($headers, $response->getHeaders());
         $this->assertEquals($response, $response->appendHeader('Server', $server = 'The Coders Zone'));
         $this->assertEquals($server, $response->getHeader('server'));
-        $this->assertEquals($body, $response->getBody());
+        $this->assertEquals((object) $body, $response->getBody());
         $this->assertEquals($foo, $response->foo);
     }
     
